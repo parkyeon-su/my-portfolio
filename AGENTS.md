@@ -10,7 +10,8 @@
 
 ## 데이터 규칙 (data.js)
 - `companies[]` 한 객체 = 기업 분석 + 지원 현황 + 자소서 + 면접 준비
-  - `status`: interest | writing | submitted | passed | test | interview | offer | rejected
+  - `status`: interest | writing | submitted | passed | test | interview | offer | rejected | dropped(포기)
+  - `resultNote`: 결과 메모 (예: "SKCT 탈락")
   - 날짜는 `YYYY-MM-DD`. `deadline`을 넣으면 달력에 자동 표시
   - 새 기업은 `stub(id, 이름, 업종, 직무, 메모)`로 만든 뒤 필드 채우기
   - `applications[]`: `{ q, limit, a }` (자소서 문항)

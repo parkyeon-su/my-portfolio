@@ -19,6 +19,7 @@
     { key: "interview", label: "면접",        tone: "navy",  color: "#2d4363" },
     { key: "offer",     label: "최종합격",    tone: "green", color: "#4f7a5e" },
     { key: "rejected",  label: "불합격",      tone: "red",   color: "#c99a94" },
+    { key: "dropped",   label: "포기",        tone: "gray",  color: "#b9b2a7" },
   ];
   const ACTIVE = ["submitted", "passed", "test", "interview"];
 
@@ -203,6 +204,7 @@
     basic: { title: "기본 정보 · 지원 상태", fields: [
       ["name", "기업명", "text"], ["industry", "업종", "text"],
       ["role", "지원 직무", "text"], ["status", "진행 상태", "status"],
+      ["resultNote", "결과 메모 (예: SKCT 탈락, 1차 면접 대기)", "text", { full: true }],
       ["appliedAt", "지원일", "date"], ["deadline", "서류 마감일", "date", { hint: "입력하면 달력에 자동 표시돼요" }],
       ["url", "채용공고 링크", "url", { full: true }], ["summary", "한 줄 요약", "text", { full: true }],
     ] },
@@ -349,7 +351,7 @@
           <div class="pipeline">${pipe.map((s) => `<span style="width:${(s.n / sum) * 100}%;background:${s.color}" title="${s.label} ${s.n}"></span>`).join("")}</div>
           <div class="legend">${pipe.map((s) => `<span><i style="background:${s.color}"></i>${s.label} ${s.n}</span>`).join("") || '<span class="placeholder">아직 등록된 기업이 없어요</span>'}</div>
           <div class="list" style="margin-top:14px">${tracked.slice(0, 6).map((c) => { const nx = evs.find((e) => e.companyId === c.id); return `<a class="list-item" href="#/companies/${c.id}" style="color:inherit;text-decoration:none">
-            <div class="grow"><div class="title">${esc(c.name)}</div><div class="desc">${esc(c.role || c.industry || "")}</div></div>
+            <div class="grow"><div class="title">${esc(c.name)}</div><div class="desc">${esc(c.role || c.industry || "")}${c.resultNote ? ` · ${esc(c.resultNote)}` : ""}</div></div>
             ${nx ? `<span class="desc">${esc(nx.title)} ${ddayHTML(nx.date)}</span>` : ""}${badge(c.status)}</a>`; }).join("")}</div>
         </div>
       </section>
@@ -532,7 +534,7 @@
         </a>
         <a class="strip" href="#/applications">
           <span class="strip-label">지원 현황</span>
-          <span class="strip-nums">${item("지원", applied)}${item("진행 중", n(ACTIVE))}${item("서류합격", n(["passed"]))}${item("면접", n(["test", "interview"]))}${item("최종합격", n(["offer"]))}${item("불합격", n(["rejected"]))}</span>
+          <span class="strip-nums">${item("지원", applied)}${item("진행 중", n(ACTIVE))}${item("서류합격", n(["passed"]))}${item("면접", n(["test", "interview"]))}${item("최종합격", n(["offer"]))}${item("불합격", n(["rejected"]))}${item("포기", n(["dropped"]))}</span>
         </a>
       </div>`;
   }
@@ -553,7 +555,7 @@
           ${shown.map((c) => { const nx = nextOf(c.id); return `<tr>
             <td class="company-cell"><a href="#/companies/${c.id}">${esc(c.name)}</a><div style="font-size:12.5px;color:var(--muted)">${esc(c.industry)}</div></td>
             <td>${esc(c.role) || '<span class="placeholder">-</span>'}</td>
-            <td><select class="input" data-action="set-status" data-id="${c.id}">${STATUSES.map((s) => `<option value="${s.key}" ${s.key === c.status ? "selected" : ""}>${s.label}</option>`).join("")}</select></td>
+            <td><select class="input" data-action="set-status" data-id="${c.id}">${STATUSES.map((s) => `<option value="${s.key}" ${s.key === c.status ? "selected" : ""}>${s.label}</option>`).join("")}</select>${c.resultNote ? `<div class="result-note">${esc(c.resultNote)}</div>` : ""}</td>
             <td style="white-space:nowrap">${dot(c.appliedAt) || '<span class="placeholder">-</span>'}</td>
             <td>${nx ? `${esc(nx.title)} ${ddayHTML(nx.date)}` : '<span class="placeholder">-</span>'}</td>
             <td style="min-width:90px"><div class="progress"><span style="width:${completeness(c)}%"></span></div></td>
@@ -620,7 +622,7 @@
       <a href="#/companies" class="back">← 기업 분석 목록</a>
       <div class="detail-head"><div class="logo">${initials(c.name)}</div>
         <div style="flex:1;min-width:200px"><h1>${esc(c.name)}</h1>
-          <div class="meta">${badge(c.status)}${c.industry ? `<span>${esc(c.industry)}</span>` : ""}${c.role ? `<span>· ${esc(c.role)}</span>` : ""}${c.appliedAt ? `<span>· 지원 ${dot(c.appliedAt)}</span>` : ""}${isFullDate(c.deadline) ? `<span>· 마감 ${dot(c.deadline)} ${ddayHTML(c.deadline)}</span>` : ""}</div>
+          <div class="meta">${badge(c.status)}${c.resultNote ? `<span class="result-note">${esc(c.resultNote)}</span>` : ""}${c.industry ? `<span>${esc(c.industry)}</span>` : ""}${c.role ? `<span>· ${esc(c.role)}</span>` : ""}${c.appliedAt ? `<span>· 지원 ${dot(c.appliedAt)}</span>` : ""}${isFullDate(c.deadline) ? `<span>· 마감 ${dot(c.deadline)} ${ddayHTML(c.deadline)}</span>` : ""}</div>
           ${c.summary ? `<div style="margin-top:8px;color:var(--text-2)">${esc(c.summary)}</div>` : ""}</div>
         <div class="head-actions">${newsSearchLinks(c.name).slice(0, 1).map(([l, u]) => `<a class="btn ghost" href="${u}" target="_blank" rel="noopener">${l} ↗</a>`).join("")}${c.url ? `<a class="btn ghost" href="${esc(c.url)}" target="_blank" rel="noopener">채용공고</a>` : ""}<button class="btn ghost" data-action="edit-company" data-id="${c.id}" data-sec="basic">기본 정보 · 상태</button></div>
       </div>
@@ -628,20 +630,30 @@
       ${body}`;
   }
 
-  function essayHTML(e, i, from) {
+  function essayHTML(e, i, from, collapsed) {
     const n = (e.a || "").length, over = e.limit && n > e.limit;
-    return `<details class="essay" ${from ? "" : "open"} data-search="${esc([e.q, e.a, from || ""].join(" ").toLowerCase())}"><summary class="q"><div><span class="n">Q${i + 1}.</span>${esc(e.q)}${from ? `<div class="from">${from}</div>` : ""}</div>
+    return `<details class="essay" ${from || collapsed ? "" : "open"} data-search="${esc([e.q, e.a, from || ""].join(" ").toLowerCase())}"><summary class="q"><div><span class="n">Q${i + 1}.</span>${esc(e.q)}${from ? `<div class="from">${from}</div>` : ""}</div>
       <span class="count ${over ? "over" : ""}">${n.toLocaleString()}${e.limit ? ` / ${Number(e.limit).toLocaleString()}` : ""}자</span></summary>
       <div class="a">${esc(e.a) || '<span class="placeholder">답변 미작성</span>'}</div></details>`;
   }
 
   let essayQuery = "";
   function viewEssays() {
-    const all = list("companies").flatMap((c) => (c.applications || []).map((e) => ({ ...e, c })));
-    const shown = all;
+    const order = STATUSES.map((s) => s.key);
+    const groups = list("companies").filter((c) => (c.applications || []).length)
+      .sort((a, b) => order.indexOf(b.status) - order.indexOf(a.status) || a.name.localeCompare(b.name));
+    const total = groups.reduce((n, c) => n + c.applications.length, 0);
     return `
-      ${pageHead("Essays", "자소서 보관함", "모든 기업의 자소서 문항을 모아 보고, 키워드로 재활용할 문장을 찾아요.", `<div class="search">${icon("search")}<input class="input" data-action="essay-search" placeholder="예: 편차, 책임감, 지원동기" value="${esc(essayQuery)}"></div>`)}
-      <div class="card">${shown.length ? shown.map((e, i) => essayHTML(e, i, `<a href="#/companies/${e.c.id}">${esc(e.c.name)}</a> · ${esc(e.c.role || "")}`)).join("") : `<div class="empty">${all.length ? "검색 결과가 없어요." : "기업 상세 › 자소서 탭에서 문항을 추가하면 여기에 모여요."}</div>`}</div>`;
+      ${pageHead("Essays", "자소서 보관함", `기업 ${groups.length}곳 · 문항 ${total}개. 키워드로 재활용할 문장을 찾아요.`, `<div class="search">${icon("search")}<input class="input" data-action="essay-search" placeholder="예: FT4, 책임감, 지원동기" value="${esc(essayQuery)}"></div>`)}
+      <div class="chips" style="margin-bottom:16px">${groups.map((c) => `<a class="chip" href="#eg-${c.id}" data-action="jump-group" data-id="${c.id}">${esc(c.name)} ${c.applications.length}</a>`).join("")}</div>
+      ${groups.length ? groups.map((c) => `
+        <section class="card essay-group" id="eg-${c.id}">
+          <div class="eg-head">
+            <div><h3><a href="#/companies/${c.id}">${esc(c.name)}</a></h3><div class="eg-role">${esc(c.role || "")}${c.resultNote ? ` · ${esc(c.resultNote)}` : ""}</div></div>
+            ${badge(c.status)}
+          </div>
+          ${c.applications.map((e, i) => essayHTML(e, i, "", true)).join("")}
+        </section>`).join("") : `<div class="card empty">기업 상세 › 자소서 탭에서 문항을 추가하면 기업별로 모여요.</div>`}`;
   }
 
   /* ---------------- Router ---------------- */
@@ -677,6 +689,12 @@
     if (!input) return;
     const q = input.value.trim().toLowerCase();
     $$("[data-search]").forEach((el) => (el.hidden = !!q && !el.dataset.search.includes(q)));
+    // 자소서 보관함: 검색어가 있으면 맞는 문항만 펼치고, 맞는 문항이 없는 기업은 숨김
+    $$(".essay-group").forEach((g) => {
+      const items = $$(".essay", g);
+      g.hidden = !!q && items.every((x) => x.hidden);
+      if (q) items.forEach((x) => (x.open = !x.hidden));
+    });
   }
 
   /* ---------------- Export / Import ---------------- */
@@ -731,6 +749,7 @@
       case "co-tab": coTab = el.dataset.tab; render(); break;
       case "app-filter": appFilter = el.dataset.k; render(); break;
       case "exp-filter": expFilter = el.dataset.tag; render(); break;
+      case "jump-group": e.preventDefault(); document.getElementById(`eg-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); break;
       case "jump-exp": e.preventDefault(); expFilter = ""; render(); document.getElementById(`exp-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); break;
       case "del-todo": remove("todos", id); render(); break;
     }
