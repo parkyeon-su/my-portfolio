@@ -8,7 +8,7 @@
 
   const BASE = window.SITE_DATA;
   const STORE_KEY = "career-notebook-overlay-v1";
-  const COLLECTIONS = ["companies", "events", "todos"];
+  const COLLECTIONS = ["companies", "events", "todos", "news", "quotes"];
 
   const STATUSES = [
     { key: "interest",  label: "관심",        tone: "gray",  color: "#cfc8bd" },
@@ -93,6 +93,7 @@
     applications: '<path d="M4 6h16M4 12h16M4 18h10"/>',
     companies: '<path d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M3 21h18"/>',
     essays: '<path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
+    news: '<path d="M4 5h13v14a2 2 0 002 2H6a2 2 0 01-2-2z"/><path d="M17 9h3v10a2 2 0 01-2 2M8 9h5M8 13h5M8 17h3"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
   };
   const icon = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`;
@@ -106,6 +107,7 @@
     { route: "calendar", label: "취업 달력" },
     { route: "applications", label: "지원 현황" },
     { route: "companies", label: "기업 분석" },
+    { route: "news", label: "뉴스 · 이슈" },
     { route: "essays", label: "자소서 보관함" },
   ];
 
@@ -288,57 +290,133 @@
       ${ddayHTML(ev.date)}</a>`;
   }
 
-  function viewDashboard() {
-    const cs = list("companies"), todos = list("todos");
-    const upcoming = allEvents().filter((e) => daysUntil(e.date) >= 0).slice(0, 6);
-    const count = (keys) => cs.filter((c) => keys.includes(c.status)).length;
-    const total = cs.filter((c) => c.status !== "interest").length;
-    const now = new Date();
+  /* 오늘의 구절: 날짜 기준으로 매일 하나씩 돌아가며 표시 */
+  function todayQuote() {
+    const qs = list("quotes");
+    if (!qs.length) return null;
+    const day = Math.floor(parseDate(today()).getTime() / 86400000);
+    return qs[((day % qs.length) + qs.length) % qs.length];
+  }
 
+  const newsSearchLinks = (name) => [
+    ["네이버 뉴스", `https://search.naver.com/search.naver?where=news&sort=1&query=${encodeURIComponent(name)}`],
+    ["구글 뉴스", `https://news.google.com/search?q=${encodeURIComponent(name)}&hl=ko&gl=KR&ceid=KR:ko`],
+    ["채용공고", `https://www.saramin.co.kr/zf_user/search?searchword=${encodeURIComponent(name)}`],
+  ];
+
+  function newsCard(nw) {
+    return `<article class="news-card">
+      <div class="news-meta"><span>${esc(nw.source || "")}</span><span>${esc(dot(nw.date))}</span></div>
+      <h4>${nw.url ? `<a href="${esc(nw.url)}" target="_blank" rel="noopener">${esc(nw.title)}</a>` : esc(nw.title)}</h4>
+      ${nw.summary ? `<p>${esc(nw.summary)}</p>` : ""}
+      <div class="news-foot">
+        ${nw.companyId ? `<a class="chip" href="#/companies/${nw.companyId}">${esc(companyName(nw.companyId))}</a>` : "<span></span>"}
+        <span>${nw.url ? `<a href="${esc(nw.url)}" target="_blank" rel="noopener">기사 ↗</a>` : ""}<button class="icon-btn" data-action="edit-news" data-id="${nw.id}" title="수정">✎</button></span>
+      </div></article>`;
+  }
+  const sortedNews = () => list("news").sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+  function viewDashboard() {
+    const cs = list("companies"), todos = list("todos"), q = todayQuote(), now = new Date();
+    const evs = allEvents().filter((e) => daysUntil(e.date) >= 0);
     const pipe = STATUSES.map((s) => ({ ...s, n: cs.filter((c) => c.status === s.key).length })).filter((s) => s.n);
     const sum = pipe.reduce((a, s) => a + s.n, 0) || 1;
-    const lowest = [...cs].sort((a, b) => completeness(a) - completeness(b)).slice(0, 4);
+    const order = STATUSES.map((s) => s.key);
+    const tracked = [...cs].sort((a, b) => order.indexOf(b.status) - order.indexOf(a.status) || (b.appliedAt || "").localeCompare(a.appliedAt || ""));
+    const featured = [...cs].sort((a, b) => completeness(b) - completeness(a)).slice(0, 6);
+    const news = sortedNews().slice(0, 3);
 
     return `
-      <div class="card hero">
-        <div><div class="eyebrow" style="color:rgba(255,255,255,.7)">${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()} ${"일월화수목금토"[now.getDay()]}요일</div>
-          <h2>${esc(P.name)}의 취업 준비 노트</h2><p>${esc(P.headline)}</p></div>
-        <div class="chips">${P.keywords.map((k) => `<span class="chip">${esc(k)}</span>`).join("")}</div>
-      </div>
+      <header class="board-head">
+        <div class="board-date">${now.getFullYear()}. ${now.getMonth() + 1}. ${now.getDate()}. ${"일월화수목금토"[now.getDay()]}요일 · 오늘의 구절</div>
+        ${q ? `<blockquote class="quote" data-action="edit-quote" data-id="${q.id}" title="눌러서 수정">${esc(q.text)}</blockquote>
+               <div class="quote-src">— ${esc(q.author || "")}${q.book ? `, 『${esc(q.book)}』` : ""}</div>`
+            : `<blockquote class="quote muted">읽다가 밑줄 그은 문장을 모아두면, 매일 하나씩 여기에 보여드려요.</blockquote>`}
+        <button class="btn ghost sm quote-add" data-action="add-quote">+ 구절 추가</button>
+      </header>
 
-      <div class="grid g-4 section-gap">
-        <div class="card stat"><div class="label">전체 지원</div><div class="value">${total}<small>곳</small></div></div>
-        <div class="card stat"><div class="label">진행 중</div><div class="value">${count(ACTIVE)}<small>곳</small></div></div>
-        <div class="card stat"><div class="label">서류 합격 이상</div><div class="value">${count(["passed", "test", "interview", "offer"])}<small>곳</small></div></div>
-        <div class="card stat"><div class="label">다가오는 일정</div><div class="value">${upcoming.length}<small>건</small></div></div>
-      </div>
-
-      <div class="grid g-2 section-gap">
+      <section class="board-sec">
+        <div class="sec-title"><h2>할 일</h2><span class="meta">${todos.filter((t) => t.done).length}/${todos.length} 완료</span></div>
         <div class="card">
-          <div class="card-title"><h3>다가오는 일정</h3><a href="#/calendar" class="meta">달력 보기 →</a></div>
-          ${upcoming.length ? `<div class="list">${upcoming.map(eventItem).join("")}</div>` : `<div class="empty">예정된 일정이 없어요.<br><button class="btn sm" data-action="add-event">+ 일정 추가</button></div>`}
-        </div>
-        <div class="card">
-          <div class="card-title"><h3>할 일</h3><span class="meta">${todos.filter((t) => t.done).length}/${todos.length} 완료</span></div>
           <form class="todo-form" data-action="add-todo"><input class="input" name="todo" placeholder="할 일 입력 후 Enter" autocomplete="off"><button class="btn">추가</button></form>
-          ${todos.map((t) => `<div class="todo ${t.done ? "done" : ""}"><input type="checkbox" data-action="toggle-todo" data-id="${t.id}" ${t.done ? "checked" : ""}><div class="grow">${esc(t.text)}</div><button class="icon-btn" data-action="del-todo" data-id="${t.id}">×</button></div>`).join("")}
+          <div class="todo-grid">${todos.map((t) => `<div class="todo ${t.done ? "done" : ""}"><input type="checkbox" data-action="toggle-todo" data-id="${t.id}" ${t.done ? "checked" : ""}><div class="grow">${esc(t.text)}</div><button class="icon-btn" data-action="del-todo" data-id="${t.id}">×</button></div>`).join("")}</div>
         </div>
-      </div>
+      </section>
 
-      <div class="grid g-2 section-gap">
+      <section class="board-sec">
+        <div class="sec-title"><h2>지원 현황</h2><a href="#/applications" class="meta">전체 보기 →</a></div>
         <div class="card">
-          <div class="card-title"><h3>지원 파이프라인</h3><a href="#/applications" class="meta">지원 현황 →</a></div>
           <div class="pipeline">${pipe.map((s) => `<span style="width:${(s.n / sum) * 100}%;background:${s.color}" title="${s.label} ${s.n}"></span>`).join("")}</div>
           <div class="legend">${pipe.map((s) => `<span><i style="background:${s.color}"></i>${s.label} ${s.n}</span>`).join("") || '<span class="placeholder">아직 등록된 기업이 없어요</span>'}</div>
+          <div class="list" style="margin-top:14px">${tracked.slice(0, 6).map((c) => { const nx = evs.find((e) => e.companyId === c.id); return `<a class="list-item" href="#/companies/${c.id}" style="color:inherit;text-decoration:none">
+            <div class="grow"><div class="title">${esc(c.name)}</div><div class="desc">${esc(c.role || c.industry || "")}</div></div>
+            ${nx ? `<span class="desc">${esc(nx.title)} ${ddayHTML(nx.date)}</span>` : ""}${badge(c.status)}</a>`; }).join("")}</div>
         </div>
-        <div class="card">
-          <div class="card-title"><h3>보완이 필요한 기업 분석</h3><a href="#/companies" class="meta">기업 분석 →</a></div>
-          <div class="list">${lowest.map((c) => `<a class="list-item" href="#/companies/${c.id}" style="color:inherit;text-decoration:none">
-            <div class="logo" style="width:34px;height:34px;font-size:13px;border-radius:9px">${initials(c.name)}</div>
-            <div class="grow"><div class="title">${esc(c.name)}</div><div class="progress" style="margin-top:6px"><span style="width:${completeness(c)}%"></span></div></div>
-            <span class="meta" style="font-size:12.5px;color:var(--muted)">${completeness(c)}%</span></a>`).join("")}</div>
+      </section>
+
+      <section class="board-sec">
+        <div class="sec-title"><h2>기업 분석</h2><a href="#/companies" class="meta">전체 보기 →</a></div>
+        <div class="grid g-3">${featured.map((c) => `<a class="card company-card mini" href="#/companies/${c.id}">
+          <div class="top"><h3>${esc(c.name)}</h3>${badge(c.status)}</div>
+          <div class="role">${esc([c.industry, c.role].filter(Boolean).join(" · ")) || "업종 · 직무 미입력"}</div>
+          <div class="foot"><div class="progress"><span style="width:${completeness(c)}%"></span></div><span>${completeness(c)}%</span></div></a>`).join("")}</div>
+      </section>
+
+      <section class="board-sec">
+        <div class="sec-title"><h2>뉴스 · 이슈</h2><span><button class="btn ghost sm" data-action="add-news">+ 뉴스 저장</button> <a href="#/news" class="meta">전체 보기 →</a></span></div>
+        ${news.length ? `<div class="grid g-3">${news.map(newsCard).join("")}</div>` : `<div class="card empty">읽은 기사를 저장하면 카드로 모여요.</div>`}
+        <div class="card news-links">
+          <div class="card-title"><h3>기업별 최신 뉴스 바로가기</h3></div>
+          ${cs.map((c) => `<div class="nl-row"><b>${esc(c.name)}</b><span>${newsSearchLinks(c.name).map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${l} ↗</a>`).join("")}</span></div>`).join("")}
         </div>
+      </section>`;
+  }
+
+  let newsFilter = "";
+  function viewNews() {
+    const cs = list("companies"), all = sortedNews();
+    const shown = newsFilter ? all.filter((n) => n.companyId === newsFilter) : all;
+    return `
+      ${pageHead("News", "뉴스 · 이슈", "읽은 기사를 카드로 저장하고, 기업별 최신 뉴스로 바로 이동해요.", `<button class="btn" data-action="add-news">+ 뉴스 저장</button>`)}
+      <div class="chips" style="margin-bottom:14px"><button class="chip ${!newsFilter ? "on" : ""}" data-action="news-filter" data-k="">전체 ${all.length}</button>
+        ${cs.filter((c) => all.some((n) => n.companyId === c.id)).map((c) => `<button class="chip ${newsFilter === c.id ? "on" : ""}" data-action="news-filter" data-k="${c.id}">${esc(c.name)} ${all.filter((n) => n.companyId === c.id).length}</button>`).join("")}</div>
+      ${shown.length ? `<div class="grid g-3">${shown.map(newsCard).join("")}</div>` : `<div class="card empty">저장한 뉴스가 없어요.<br><button class="btn sm" data-action="add-news">+ 뉴스 저장</button></div>`}
+      <div class="card news-links section-gap">
+        <div class="card-title"><h3>기업별 최신 뉴스 바로가기</h3><span class="meta">최신순 검색 결과로 열려요</span></div>
+        ${cs.map((c) => `<div class="nl-row"><b>${esc(c.name)}</b><span>${newsSearchLinks(c.name).map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${l} ↗</a>`).join("")}</span></div>`).join("")}
       </div>`;
+  }
+
+  function editNews(id) {
+    const isNew = !id;
+    const nw = isNew ? { id: uid("nw"), date: today(), title: "", source: "", url: "", summary: "", companyId: "" } : clone(get("news", id));
+    const fields = [["title", "기사 제목", "text", { full: true }], ["url", "기사 링크", "url", { full: true }], ["source", "언론사", "text"], ["date", "날짜", "date"], ["companyId", "관련 기업", "company"], ["summary", "요약 · 내 생각 (면접에서 쓸 포인트)", "area-sm"]];
+    openModal({
+      title: isNew ? "뉴스 저장" : "뉴스 수정",
+      body: `<div class="form-grid">${fields.map((f) => fieldHTML(f, nw[f[0]])).join("")}</div>`,
+      onSubmit: () => {
+        fields.forEach(([n]) => (nw[n] = $(`#modalBody [name="${n}"]`).value.trim()));
+        if (!nw.title) return toast("제목을 입력해 주세요");
+        upsert("news", nw); closeModal(); render(); toast("저장했어요");
+      },
+      onDelete: isNew ? null : () => { remove("news", nw.id); closeModal(); render(); toast("삭제했어요"); },
+    });
+  }
+
+  function editQuote(id) {
+    const isNew = !id;
+    const q = isNew ? { id: uid("qt"), text: "", author: "", book: "" } : clone(get("quotes", id));
+    const fields = [["text", "구절", "area", { full: true }], ["author", "작가", "text"], ["book", "책 제목", "text"]];
+    openModal({
+      title: isNew ? "구절 추가" : "구절 수정",
+      body: `<div class="form-grid">${fields.map((f) => fieldHTML(f, q[f[0]])).join("")}</div><p class="hint" style="font-size:12px;color:var(--muted)">저장된 구절이 날짜마다 하나씩 돌아가며 보여요.</p>`,
+      onSubmit: () => {
+        fields.forEach(([n]) => (q[n] = $(`#modalBody [name="${n}"]`).value.trim()));
+        if (!q.text) return toast("구절을 입력해 주세요");
+        upsert("quotes", q); closeModal(); render(); toast("저장했어요");
+      },
+      onDelete: isNew ? null : () => { remove("quotes", q.id); closeModal(); render(); toast("삭제했어요"); },
+    });
   }
 
   function viewProfile() {
@@ -399,11 +477,13 @@
   }
 
   let calCursor = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
-  function viewCalendar() {
+
+  /** 달력 블록 (취업 달력 페이지 + 첫 화면 아래 큰 달력에서 같이 사용) */
+  function calendarBlock({ maxPer = 3, big = false } = {}) {
     const y = calCursor.getFullYear(), m = calCursor.getMonth();
     const start = new Date(y, m, 1 - new Date(y, m, 1).getDay());
-    const evs = allEvents(), byDate = {};
-    evs.forEach((e) => (byDate[e.date] = byDate[e.date] || []).push(e));
+    const byDate = {};
+    allEvents().forEach((e) => (byDate[e.date] = byDate[e.date] || []).push(e));
     const cells = [];
     for (let i = 0; i < 42; i++) {
       const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i), key = ymd(d);
@@ -411,20 +491,49 @@
       const items = byDate[key] || [];
       cells.push(`<div class="day ${d.getMonth() !== m ? "other" : ""} ${key === today() ? "today" : ""}" data-action="cal-day" data-date="${key}">
         <span class="num">${d.getDate()}</span>
-        ${items.slice(0, 3).map((e) => { const t = EVENT_TYPES[e.type] || EVENT_TYPES.etc; return `<div class="ev" style="background:${t.bg};color:${t.fg}" data-action="${e.auto ? "goto-company" : "edit-event"}" data-id="${e.auto ? e.companyId : e.id}" title="${esc(e.title)}">${esc(e.title)}</div>`; }).join("")}
-        ${items.length > 3 ? `<span class="more">+${items.length - 3}</span>` : ""}</div>`);
+        ${items.slice(0, maxPer).map((e) => { const t = EVENT_TYPES[e.type] || EVENT_TYPES.etc; return `<div class="ev" style="background:${t.bg};color:${t.fg}" data-action="${e.auto ? "goto-company" : "edit-event"}" data-id="${e.auto ? e.companyId : e.id}" title="${esc(e.title)}">${esc(e.title)}</div>`; }).join("")}
+        ${items.length > maxPer ? `<span class="more">+${items.length - maxPer}</span>` : ""}</div>`);
     }
-    const monthEvs = evs.filter((e) => e.date.startsWith(`${y}-${String(m + 1).padStart(2, "0")}`));
+    return `
+      <div class="cal-head">
+        ${big ? `<h2 class="cal-title">${y}. ${String(m + 1).padStart(2, "0")}</h2>` : `<h2>${y}년 ${m + 1}월</h2>`}
+        <button class="icon-btn" data-action="cal-prev" aria-label="이전 달">‹</button><button class="icon-btn" data-action="cal-next" aria-label="다음 달">›</button>
+        <button class="btn ghost sm" data-action="cal-today">오늘</button>
+        ${big ? `<button class="btn sm" data-action="add-event">+ 일정</button>` : ""}
+        <div class="chips cal-legend">${Object.values(EVENT_TYPES).map((t) => `<span class="chip" style="background:${t.bg};color:${t.fg};border-color:transparent">${t.label}</span>`).join("")}</div>
+      </div>
+      <div class="cal ${big ? "big" : ""}">${["일", "월", "화", "수", "목", "금", "토"].map((d, i) => `<div class="dow ${i === 0 ? "sun" : i === 6 ? "sat" : ""}">${d}</div>`).join("")}${cells.join("")}</div>`;
+  }
+
+  function viewCalendar() {
+    const y = calCursor.getFullYear(), m = calCursor.getMonth();
+    const monthEvs = allEvents().filter((e) => e.date.startsWith(`${y}-${String(m + 1).padStart(2, "0")}`));
     return `
       ${pageHead("Calendar", "취업 달력", "서류 마감 · 인적성 · 면접 · 발표 일정. 날짜를 누르면 바로 추가돼요.", `<button class="btn" data-action="add-event">+ 일정 추가</button>`)}
-      <div class="card">
-        <div class="cal-head"><button class="icon-btn" data-action="cal-prev">‹</button><h2>${y}년 ${m + 1}월</h2><button class="icon-btn" data-action="cal-next">›</button>
-          <button class="btn ghost sm" data-action="cal-today">오늘</button>
-          <div class="chips" style="margin-left:auto">${Object.values(EVENT_TYPES).map((t) => `<span class="chip" style="background:${t.bg};color:${t.fg};border-color:transparent">${t.label}</span>`).join("")}</div></div>
-        <div class="cal">${["일", "월", "화", "수", "목", "금", "토"].map((d, i) => `<div class="dow ${i === 0 ? "sun" : i === 6 ? "sat" : ""}">${d}</div>`).join("")}${cells.join("")}</div>
-      </div>
+      <div class="card">${calendarBlock()}</div>
       <div class="card section-gap"><div class="card-title"><h3>${m + 1}월 일정 목록</h3><span class="meta">${monthEvs.length}건</span></div>
         ${monthEvs.length ? `<div class="list">${monthEvs.map(eventItem).join("")}</div>` : `<div class="empty">이번 달 일정이 없어요.</div>`}
+      </div>`;
+  }
+
+  /* ---------------- 첫 화면 아래: 큰 달력 + 요약 두 줄 ---------------- */
+  function viewOverview() {
+    const cs = list("companies");
+    const n = (keys) => cs.filter((c) => keys.includes(c.status)).length;
+    const applied = cs.filter((c) => !["interest", "writing"].includes(c.status)).length;
+    const weekDeadlines = allEvents().filter((e) => e.type === "deadline" && daysUntil(e.date) >= 0 && daysUntil(e.date) <= 7).length;
+    const item = (label, v) => `<span class="strip-item">${label} <b>${v}</b></span>`;
+    return `
+      <div class="ov-inner">
+        <div class="ov-cal">${calendarBlock({ maxPer: 4, big: true })}</div>
+        <a class="strip" href="#/companies">
+          <span class="strip-label">전체 공고</span>
+          <span class="strip-nums">${item("전체", cs.length)}${item("관심", n(["interest"]))}${item("작성중", n(["writing"]))}${item("7일 내 마감", weekDeadlines)}</span>
+        </a>
+        <a class="strip" href="#/applications">
+          <span class="strip-label">지원 현황</span>
+          <span class="strip-nums">${item("지원", applied)}${item("진행 중", n(ACTIVE))}${item("서류합격", n(["passed"]))}${item("면접", n(["test", "interview"]))}${item("최종합격", n(["offer"]))}${item("불합격", n(["rejected"]))}</span>
+        </a>
       </div>`;
   }
 
@@ -513,7 +622,7 @@
         <div style="flex:1;min-width:200px"><h1>${esc(c.name)}</h1>
           <div class="meta">${badge(c.status)}${c.industry ? `<span>${esc(c.industry)}</span>` : ""}${c.role ? `<span>· ${esc(c.role)}</span>` : ""}${c.appliedAt ? `<span>· 지원 ${dot(c.appliedAt)}</span>` : ""}${isFullDate(c.deadline) ? `<span>· 마감 ${dot(c.deadline)} ${ddayHTML(c.deadline)}</span>` : ""}</div>
           ${c.summary ? `<div style="margin-top:8px;color:var(--text-2)">${esc(c.summary)}</div>` : ""}</div>
-        <div class="head-actions">${c.url ? `<a class="btn ghost" href="${esc(c.url)}" target="_blank" rel="noopener">채용공고</a>` : ""}<button class="btn ghost" data-action="edit-company" data-id="${c.id}" data-sec="basic">기본 정보 · 상태</button></div>
+        <div class="head-actions">${newsSearchLinks(c.name).slice(0, 1).map(([l, u]) => `<a class="btn ghost" href="${u}" target="_blank" rel="noopener">${l} ↗</a>`).join("")}${c.url ? `<a class="btn ghost" href="${esc(c.url)}" target="_blank" rel="noopener">채용공고</a>` : ""}<button class="btn ghost" data-action="edit-company" data-id="${c.id}" data-sec="basic">기본 정보 · 상태</button></div>
       </div>
       <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${coTab === k ? "on" : ""}" data-action="co-tab" data-tab="${k}">${l}</button>`).join("")}</div>
       ${body}`;
@@ -536,7 +645,7 @@
   }
 
   /* ---------------- Router ---------------- */
-  const VIEWS = { dashboard: viewDashboard, profile: viewProfile, strengths: viewStrengths, calendar: viewCalendar, applications: viewApplications, companies: viewCompanies, essays: viewEssays };
+  const VIEWS = { news: viewNews, dashboard: viewDashboard, profile: viewProfile, strengths: viewStrengths, calendar: viewCalendar, applications: viewApplications, companies: viewCompanies, essays: viewEssays };
   let lastRoute = "";
   function render() {
     const [, route = "dashboard", id] = location.hash.split("/");
@@ -548,8 +657,16 @@
     $$("#nav a").forEach((a) => a.classList.toggle("active", a.dataset.route === r));
     const label = NAV.find((n) => n.route === r)?.label || "";
     $("#topTitle").textContent = label;
-    document.title = `${label} · Career Notebook`;
-    if (routeKey !== lastRoute) window.scrollTo(0, 0);
+    document.title = r === "dashboard" ? "preparing for" : `${label} · preparing for`;
+
+    // 첫 화면(intro)은 대시보드에서만 보이고, 다른 메뉴로 가면 숨김
+    const intro = $("#intro"), ov = $("#overview"), firstLoad = !lastRoute;
+    intro.hidden = ov.hidden = r !== "dashboard";
+    if (r === "dashboard") ov.innerHTML = viewOverview();
+    if (routeKey !== lastRoute) {
+      if (r === "dashboard" && !firstLoad) window.scrollTo(0, $("#board").offsetTop);
+      else if (!firstLoad || r !== "dashboard") window.scrollTo(0, 0);
+    }
     lastRoute = routeKey;
     $("#sidebar").classList.remove("open");
   }
@@ -591,6 +708,12 @@
     if (!el) { if (e.target.id === "modal") closeModal(); return; }
     const { action, id } = el.dataset;
     switch (action) {
+      case "to-board": e.preventDefault(); window.scrollTo({ top: $("#overview").offsetTop, behavior: "smooth" }); break;
+      case "add-news": editNews(); break;
+      case "edit-news": editNews(id); break;
+      case "news-filter": newsFilter = el.dataset.k; render(); break;
+      case "add-quote": editQuote(); break;
+      case "edit-quote": editQuote(id); break;
       case "modal-close": closeModal(); break;
       case "modal-submit": modalSubmit?.(); break;
       case "modal-delete": modalDelete?.(); break;
@@ -644,6 +767,16 @@
   });
 
   window.addEventListener("hashchange", () => { closeModal(); render(); });
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual"; // 새로고침하면 항상 첫 화면부터
+
+  // 스크롤하면 첫 화면 글자가 천천히 흐려지며 올라감
+  const introTitle = $(".intro-title");
+  window.addEventListener("scroll", () => {
+    if ($("#intro").hidden) return;
+    const p = Math.min(window.scrollY / window.innerHeight, 1);
+    introTitle.style.opacity = String(1 - p * 1.1);
+    introTitle.style.transform = `translateY(${p * -60}px)`;
+  }, { passive: true });
   renderNav();
   render();
 })();

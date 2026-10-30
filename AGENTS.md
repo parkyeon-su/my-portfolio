@@ -16,12 +16,14 @@
   - `applications[]`: `{ q, limit, a }` (자소서 문항)
   - `issues[]`: `{ date, title, note }`, `interview[]`: `{ q, a }`, `links[]`: `{ label, url }`
 - `events[]`: `{ id, date, type, title, companyId, time, memo }`, type: deadline | test | interview | result | event | etc
+- `news[]`: `{ id, date, title, source, url, summary, companyId }` — 뉴스 카드
+- `quotes[]`: `{ id, text, author, book }` — 대시보드 '오늘의 구절' (날짜마다 하나씩 순환). 사용자가 직접 고른 구절만 넣을 것
 - `experiences[]`: STAR 형식 `{ id, title, org, period, role, tags, s, a, r }`
 - `strengths[].evidence`에는 experiences의 id를 넣음
 - 텍스트 필드에서 `- `로 시작하는 줄은 글머리 목록, `**굵게**` 지원
 
 ## 지켜야 할 것
 - 공개 사이트임: 전화번호, 주소, 생년월일, 주민번호 등 개인정보 넣지 말 것
-- 외부 라이브러리 추가하지 말 것 (Pretendard 폰트 CDN만 사용)
+- 외부 라이브러리 추가하지 말 것 (글꼴: 나눔스퀘어라운드, Fraunces(영문 제목), Pretendard(대체)만 사용)
 - 사용자 입력은 항상 `esc()`로 이스케이프
 - 사실 확인이 안 된 기업 정보는 지어내지 말고 빈칸으로 둘 것

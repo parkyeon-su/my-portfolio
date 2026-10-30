@@ -5,16 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Career Notebook</title>
+  <!-- 한글 본문: 나눔스퀘어라운드 (둥근 고딕) -->
+  <link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square-round.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&display=swap">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-  <div class="app">
+  <!-- 첫 화면: 베이지 전체 화면 + preparing for -->
+  <section class="intro" id="intro">
+    <h1 class="intro-title">preparing for</h1>
+    <a class="intro-cue" href="#/dashboard" data-action="to-board" aria-label="아래로 스크롤">scroll</a>
+  </section>
+
+  <!-- 스크롤 1번: 큰 달력 + 요약 두 줄 -->
+  <section class="overview" id="overview" hidden></section>
+
+  <div class="app" id="board">
     <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <div class="brand-mark">YS</div>
-        <div><strong>Career Notebook</strong><span>박연수의 취업 준비 노트</span></div>
-      </div>
+      <a class="brand" href="#/dashboard">
+        <span class="brand-title">preparing for</span>
+        <span class="brand-sub">박연수의 취업 준비 노트</span>
+      </a>
       <nav class="nav" id="nav"></nav>
       <div class="sidebar-foot">
         <small>브라우저에서 수정한 내용은 이 기기에만 저장돼요. 주기적으로 내보내서 data.js에 반영하세요.</small>
