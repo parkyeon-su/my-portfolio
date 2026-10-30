@@ -21,6 +21,12 @@ menuButton.addEventListener('click', () => {
 
 navLinks.forEach((link) => link.addEventListener('click', closeMenu));
 window.addEventListener('resize', () => { if (window.innerWidth > 680) closeMenu(); });
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && nav.classList.contains('open')) {
+    closeMenu();
+    menuButton.focus();
+  }
+});
 
 function updateNavigation() {
   header.classList.toggle('scrolled', window.scrollY > 24);
@@ -43,7 +49,7 @@ const revealObserver = new IntersectionObserver((entries, observer) => {
       observer.unobserve(entry.target);
     }
   });
-}, { threshold: 0.12 });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px' });
 
 document.querySelectorAll('.reveal').forEach((element) => revealObserver.observe(element));
 document.getElementById('year').textContent = new Date().getFullYear();

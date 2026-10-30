@@ -1,202 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="화학공학 전공자의 생산기술, 공정, 반도체 직무 포트폴리오">
-  <meta name="theme-color" content="#0b1f33">
-  <title>김화공 | Chemical Engineering Portfolio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Career Notebook</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">YS</div>
+        <div><strong>Career Notebook</strong><span>박연수의 취업 준비 노트</span></div>
+      </div>
+      <nav class="nav" id="nav"></nav>
+      <div class="sidebar-foot">
+        <small>브라우저에서 수정한 내용은 이 기기에만 저장돼요. 주기적으로 내보내서 data.js에 반영하세요.</small>
+        <button class="btn ghost sm block" id="exportBtn">data.js 내보내기</button>
+        <button class="btn ghost sm block" id="importBtn">가져오기</button>
+        <button class="btn danger sm block" id="resetBtn">브라우저 수정 초기화</button>
+        <input type="file" id="importFile" accept=".js,.json" hidden>
+      </div>
+    </aside>
 
-  <header class="site-header" id="top">
-    <div class="nav-wrap">
-      <a class="logo" href="#top" aria-label="홈으로 이동">
-        <span class="logo-mark">CH</span>
-        <span class="logo-name">PORTFOLIO</span>
-      </a>
-      <button class="menu-button" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="메뉴 열기">
-        <span></span><span></span><span></span>
-      </button>
-      <nav class="nav-links" id="main-nav" aria-label="주요 메뉴">
-        <a href="#about">About</a>
-        <a href="#experience">Experience</a>
-        <a href="#projects">Projects</a>
-        <a href="#skills">Skills</a>
-        <a class="nav-contact" href="#contact">Contact</a>
-      </nav>
+    <div class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="menuBtn" aria-label="메뉴">☰</button>
+        <span id="topTitle"></span>
+      </header>
+      <main class="view" id="view"></main>
     </div>
-  </header>
+  </div>
 
-  <main id="main">
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-grid">
-        <div class="hero-copy">
-          <p class="eyebrow">CHEMICAL ENGINEERING PORTFOLIO · 2026</p>
-          <!-- 이름은 아래 h1의 텍스트를 수정하세요. -->
-          <h1 id="hero-title">안녕하세요,<br><span>김화공</span>입니다.</h1>
-          <p class="hero-role">Chemical Engineering</p>
-          <p class="hero-summary">공정의 작은 변화를 성과로 연결하는 엔지니어를 지향합니다. 데이터와 실험을 바탕으로 생산 현장의 문제를 정의하고, 더 안정적이고 효율적인 답을 찾습니다.</p>
-          <div class="hero-actions">
-            <a class="button button-primary" href="#projects">프로젝트 보기 <span aria-hidden="true">↗</span></a>
-            <a class="button button-ghost" href="#contact">연락하기</a>
-          </div>
-        </div>
+  <div class="modal-backdrop" id="modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head"><h3 id="modalTitle"></h3><button class="icon-btn" data-action="modal-close" aria-label="닫기">×</button></div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-foot" id="modalFoot"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
 
-        <div class="hero-visual" aria-label="지원 직무: 공정, 생산기술, 반도체">
-          <div class="process-card">
-            <div class="process-head">
-              <span>CORE FIELDS</span>
-              <span class="status"><i></i> OPEN TO WORK</span>
-            </div>
-            <div class="process-flow">
-              <div class="flow-node"><span>01</span><strong>PROCESS</strong><small>공정 설계 · 최적화</small></div>
-              <div class="flow-line"><i></i></div>
-              <div class="flow-node"><span>02</span><strong>MANUFACTURING</strong><small>생산성 · 품질 개선</small></div>
-              <div class="flow-line"><i></i></div>
-              <div class="flow-node"><span>03</span><strong>SEMICONDUCTOR</strong><small>소자 · 공정 이해</small></div>
-            </div>
-            <div class="process-metrics">
-              <div><strong>DATA</strong><span>Driven</span></div>
-              <div><strong>FIELD</strong><span>Focused</span></div>
-              <div><strong>TEAM</strong><span>Oriented</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <a class="scroll-cue" href="#about"><span>SCROLL</span><i></i></a>
-    </section>
-
-    <section class="section about" id="about">
-      <div class="section-heading reveal">
-        <p class="section-number">01 / ABOUT ME</p>
-        <h2>문제를 이해하고,<br>근거로 개선합니다.</h2>
-      </div>
-      <div class="about-content reveal">
-        <p class="about-lead">화학공학의 공정적 사고와 반도체에 대한 이해를 바탕으로 <strong>현장에서 실행 가능한 해결책</strong>을 만드는 엔지니어가 되고 싶습니다.</p>
-        <!-- 소개 문구와 학력 정보를 아래에서 자유롭게 수정하세요. -->
-        <p>교환학생 연구와 학부 연구를 통해 낯선 환경에서도 빠르게 실험을 설계하고 데이터를 해석하는 법을 배웠습니다. 서로 다른 전공의 팀원과 협업하며 복잡한 문제를 명확하게 정리하는 역량을 길렀습니다.</p>
-        <dl class="profile-list">
-          <div><dt>EDUCATION</dt><dd>OO대학교 화학공학과</dd></div>
-          <div><dt>INTEREST</dt><dd>공정 최적화 · 생산기술 · 반도체</dd></div>
-          <div><dt>LOCATION</dt><dd>Seoul, Republic of Korea</dd></div>
-        </dl>
-      </div>
-    </section>
-
-    <section class="section section-dark" id="experience">
-      <div class="section-heading reveal">
-        <p class="section-number">02 / EXPERIENCE</p>
-        <h2>연구를 통해 쌓은<br>실험과 분석의 경험</h2>
-      </div>
-      <div class="timeline">
-        <article class="timeline-item reveal">
-          <div class="timeline-meta"><span>2025</span><span>GERMANY</span></div>
-          <div class="timeline-body">
-            <p class="item-type">EXCHANGE RESEARCH</p>
-            <h3>Hochschule Darmstadt<br>교환학생 연구</h3>
-            <p>글로벌 연구 환경에서 화학공학 기반의 연구 과제를 수행했습니다. 실험 계획 수립부터 결과 분석, 영문 발표까지 전 과정을 경험했습니다.</p>
-            <ul class="tag-list"><li>Global Collaboration</li><li>Research</li><li>Presentation</li></ul>
-          </div>
-        </article>
-        <article class="timeline-item reveal">
-          <div class="timeline-meta"><span>2025</span><span>POWDER</span></div>
-          <div class="timeline-body">
-            <p class="item-type">POWDER CHARACTERIZATION</p>
-            <h3>FT4 Powder Rheometer를 이용한<br>Powder Flow 연구</h3>
-            <p>FT4 장비를 활용해 다양한 조건에서 분체의 유동 특성을 측정하고, 주요 인자가 공정 안정성에 미치는 영향을 비교·분석했습니다.</p>
-            <ul class="tag-list"><li>FT4</li><li>Data Analysis</li><li>Processability</li></ul>
-          </div>
-        </article>
-        <article class="timeline-item reveal">
-          <div class="timeline-meta"><span>2024</span><span>MEMBRANE</span></div>
-          <div class="timeline-body">
-            <p class="item-type">UNDERGRADUATE RESEARCH</p>
-            <h3>학부연구생<br>가스분리막 연구</h3>
-            <p>고분자 기반 가스분리막을 제조하고 투과도와 선택도를 평가했습니다. 반복 실험과 변수 관리를 통해 데이터 신뢰도를 높였습니다.</p>
-            <ul class="tag-list"><li>Gas Separation</li><li>Polymer</li><li>Lab Safety</li></ul>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="section projects" id="projects">
-      <div class="section-heading reveal">
-        <p class="section-number">03 / SELECTED PROJECTS</p>
-        <h2>이론을 실제 문제에<br>적용한 프로젝트</h2>
-      </div>
-      <div class="project-grid">
-        <article class="project-card featured reveal">
-          <div class="project-index">01</div>
-          <div class="project-content">
-            <p class="item-type">SEMICONDUCTOR · SIMULATION</p>
-            <h3>Sentaurus TCAD<br>NMOS / HKMG</h3>
-            <p>Sentaurus TCAD를 활용해 NMOS 구조를 설계하고 HKMG 적용에 따른 전기적 특성 변화를 분석한 프로젝트입니다.</p>
-            <ul class="tag-list"><li>Sentaurus TCAD</li><li>NMOS</li><li>HKMG</li></ul>
-          </div>
-          <div class="project-graphic chip-graphic" aria-hidden="true"><span></span><span></span><span></span><span></span><i></i></div>
-        </article>
-        <article class="project-card reveal">
-          <div class="project-index">02</div>
-          <div class="project-content">
-            <p class="item-type">CAPSTONE DESIGN</p>
-            <h3>pH-responsive<br>Hydrogel</h3>
-            <p>pH 변화에 선택적으로 반응하는 하이드로젤을 설계·제조하고 물성 및 반응 특성을 평가했습니다.</p>
-            <ul class="tag-list"><li>Hydrogel</li><li>DOE</li><li>Team Project</li></ul>
-          </div>
-          <div class="project-graphic gel-graphic" aria-hidden="true"><i></i><i></i><i></i></div>
-        </article>
-        <article class="project-card reveal">
-          <div class="project-index">03</div>
-          <div class="project-content">
-            <p class="item-type">PROCESS DESIGN</p>
-            <h3>Aspen Plus<br>공정설계</h3>
-            <p>Aspen Plus로 화학 공정을 모델링하고 주요 운전 조건에 따른 성능과 에너지 효율을 비교했습니다.</p>
-            <ul class="tag-list"><li>Aspen Plus</li><li>Simulation</li><li>Optimization</li></ul>
-          </div>
-          <div class="project-graphic process-graphic" aria-hidden="true"><i></i><span></span><b></b></div>
-        </article>
-      </div>
-    </section>
-
-    <section class="section skills" id="skills">
-      <div class="section-heading reveal">
-        <p class="section-number">04 / SKILLS</p>
-        <h2>분석부터 협업까지,<br>문제 해결을 위한 도구</h2>
-      </div>
-      <div class="skills-grid reveal">
-        <div class="skill-group"><span class="skill-no">01</span><h3>ENGINEERING</h3><p>Aspen Plus · Sentaurus TCAD<br>FT4 Powder Rheometer</p></div>
-        <div class="skill-group"><span class="skill-no">02</span><h3>DATA</h3><p>Python · MATLAB · Origin<br>Excel · Data Visualization</p></div>
-        <div class="skill-group"><span class="skill-no">03</span><h3>LAB</h3><p>Membrane Fabrication<br>Material Characterization</p></div>
-        <div class="skill-group"><span class="skill-no">04</span><h3>LANGUAGE</h3><p>Korean · Native<br>English · Business</p></div>
-      </div>
-    </section>
-
-    <section class="contact" id="contact">
-      <div class="contact-inner reveal">
-        <p class="section-number">05 / CONTACT</p>
-        <h2>함께 더 나은 공정을<br>만들 준비가 되어 있습니다.</h2>
-        <p>새로운 기회와 협업에 열려 있습니다.<br>편하게 연락해 주세요.</p>
-        <!-- 이메일과 링크를 본인의 정보로 교체하세요. -->
-        <div class="contact-links">
-          <a href="mailto:yourname@email.com">yourname@email.com <span>↗</span></a>
-          <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer">LinkedIn <span>↗</span></a>
-          <a href="#" aria-label="이력서 링크">Resume <span>↗</span></a>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <p>© <span id="year"></span> KIM HWAGONG. ALL RIGHTS RESERVED.</p>
-    <a href="#top">BACK TO TOP ↑</a>
-  </footer>
-
-  <script src="script.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
 </body>
 </html>
